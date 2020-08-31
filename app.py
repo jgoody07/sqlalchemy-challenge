@@ -24,6 +24,9 @@ Base.prepare(engine, reflect=True)
 Measurement = Base.classes.measurement
 Station = Base.classes.station
 
+# Create our session (link) from Python to the DB
+session = Session(engine)
+
 #################################################
 # Flask Setup
 #################################################
@@ -36,25 +39,21 @@ app = Flask(__name__)
 def home():
     """List all available api routes."""
     return(
+        f"Welcome to the Hawaii Climate Analysis<br/>"
         f"List all available api routes:<br/>"
         f"<a href='/api/v1.0/precipitation'>precipitation</a><br/>"
         f"<a href='/api/v1.0/stations'>stations</a><br/>"
         f"<a href='/api/v1.0/tobs'>tobs</a><br/>"
-        f"<a href='/api/v1.0/<start>'>start</a><br/>"
-        f"<a href='/api/v1.0/<start>/<end>'>start/finish</a>"
+        f"/api/v1.0/temp/start/end"
+        # f"<a href='/api/v1.0/<start>'>start</a><br/>"
+        # f"<a href='/api/v1.0/<start>/<end>'>start/finish</a><br/>"
     )
 
 #------------------------------------------------   
 @app.route('/api/v1.0/precipitation')
 def precipitation():
-    
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
-
-    # Query precipitation data
+     # Query precipitation data
     results = session.query(Measurement.date, Measurement.prcp).all()
-
-    session.close()
 
     precipitation_data = []
     for date, prcp in results:
@@ -68,14 +67,8 @@ def precipitation():
 #------------------------------------------------   
 @app.route('/api/v1.0/stations')
 def stations():
-
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
-
     # Query list of stations data
     results = session.query(Station.station, Station.name).all()
-
-    session.close()
 
     station_list = []
     for station, name in results:
@@ -90,10 +83,6 @@ def stations():
 #------------------------------------------------   
 @app.route('/api/v1.0/tobs')
 def tobs():
-
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
-
     # Query list of temperature observation data
 
     # Calculate the date 1 year ago from last date in database
@@ -103,25 +92,20 @@ def tobs():
     results = session.query(Measurement.tobs).filter(Measurement.station == 'USC00519281').\
     filter(Measurement.date >= prev_year).all()
 
-    session.close()
-
     # Unravel results into a 1D array and convert to a list
     temperatures = list(np.ravel(results))
 
     return jsonify(temperatures)
 
 # ------------------------------------------------   
-@app.route('/api/v1.0/<start>')
-@app.route('/api/v1.0/<start>/<end>')
+@app.route("/api/v1.0/temp/<start>")
+@app.route("/api/v1.0/temp/<start>/<end>")
 def stats(start=None, end=None):
     """Return TMIN, TAVG, TMAX."""
 
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
-
     # Select statement
     sel = [func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)]
-    
+
     if not end:
         # calculate TMIN, TAVG, TMAX for dates greater than start
         results = session.query(*sel).\
@@ -134,13 +118,11 @@ def stats(start=None, end=None):
     results = session.query(*sel).\
         filter(Measurement.date >= start).\
         filter(Measurement.date <= end).all()
-
-    session.close()
-
     # Unravel results into a 1D array and convert to a list
     temps = list(np.ravel(results))
     return jsonify(temps=temps)
 
-    
+session.close
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
