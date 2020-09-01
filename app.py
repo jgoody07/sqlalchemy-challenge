@@ -44,9 +44,7 @@ def home():
         f"<a href='/api/v1.0/precipitation'>precipitation</a><br/>"
         f"<a href='/api/v1.0/stations'>stations</a><br/>"
         f"<a href='/api/v1.0/tobs'>tobs</a><br/>"
-        f"/api/v1.0/temp/start/end"
-        # f"<a href='/api/v1.0/<start>'>start</a><br/>"
-        # f"<a href='/api/v1.0/<start>/<end>'>start/finish</a><br/>"
+        f"<a href='/api/v1.0/temp/start/end'>start/end</a><br/>"
     )
 
 #------------------------------------------------   
